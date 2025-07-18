@@ -1,0 +1,18 @@
+name: API Feedback
+description: Use this template to report bugs or feature suggestions
+title: "[Feedback] "
+labels: ["api", "feedback"]
+body:
+  - type: input
+    id: endpoint
+    attributes:
+      label: Affected Endpoint
+      description: Path and HTTP method (e.g. GET /users)
+      placeholder: GET /users
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe your feedback
+      placeholder: What did you observe?
+      required: true
