@@ -1,8 +1,8 @@
 ---
 name: Feedback
 about: Give your feedback
-title: "[Bug]: "
-labels: bug
+title: "[Feedback]: "
+labels: feedback
 assignees: ''
  
 ---
