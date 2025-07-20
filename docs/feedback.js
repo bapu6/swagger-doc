@@ -73,6 +73,8 @@
     };
     // Suggestion (just closes for now)
     modal.querySelector('#submit-suggestion-btn').onclick = () => {
+      const text = document.getElementById('feedback-text');
+      console.log(text)
       alert('Thank you for your suggestion!');
       modal.style.display = 'none';
     };
