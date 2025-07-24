@@ -1,0 +1,4395 @@
+  openapi: 3.0.0
+  servers:
+    - description: SwaggerHub API Auto Mocking
+      url: https://virtserver.swaggerhub.com/hcl-6c5/Translation-Hub/1.0.0
+  info:
+    version: "1.0.0"
+    title: Translation Hub API
+    description: API to translate documents into multiple languages using async job submission
+  paths:
+    /api/translate:
+      post:
+        tags:
+          - Translation
+        summary: Submit translation jobs for documents
+        description:  Submits a translation request for one or more uploaded documents to one or more target languages. Supports automatic language detection and provider selection. Returns a batch_id and a list of job_id's.
+        operationId: submitTranslationJobs
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslationRequest'
+        responses:
+          '200':
+            description: Translation jobs successfully created
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/TranslationResponse'
+          '422':
+            description: Translation failed
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  batch_id: "werr4-456-fghj3"
+                  error:
+                    code: 422
+                    message: Translation process failed due to internal reasons
+
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  batch_id: "werr401224-rttyu-qwer"
+                  error:
+                    code: 500
+                    message: unexpected server error
+
+    /api/downloads:
+      get:
+        tags:
+          - Translation
+        summary: Retrieve download links and statuses for translation jobs in a batch
+        description:   Returns download links for all successfully translated documents in a batch. Also includes error messages for any failed jobs.
+        operationId: getDownloadLinks
+        parameters:
+          - name: batch_id
+            in: query
+            required: true
+            description: ID of the translation batch
+            schema:
+              type: string
+              example: batch_001
+        responses:
+          '200':
+            description: Download links and job statuses
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/DownloadResponse'
+          '404':
+            description: Server or download error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  batch_id: "vbghjk-2345_wert"
+                  error:
+                    code: 404
+                    message: Translated document not found
+          '500':
+            description: Server or download error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  batch_id: "qerer-23456-hui897"
+                  error:
+                    code: 404
+                    message: Internal server error
+    /api/documents/upload:
+      post:
+        tags:
+          - Documents Upload
+        summary: Upload one or multiple documents
+        operationId: uploadDocuments
+        requestBody:
+          required: true
+          content:
+            multipart/form-data:
+              schema:
+                type: object
+                properties:
+                  files:
+                    type: array
+                    items:
+                      type: string
+                      format: binary
+                required:
+                  - files
+        responses:
+          '200':
+            description: Successfully uploaded documents
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/DocumentUploadResponse'
+                example:
+                  - document_id: "doc-123abc"
+                    filename: "file1.pdf"
+                    created_at: "2025-07-22T14:00:00Z"
+                  - document_id: "doc-456def"
+                    filename: "file2.docx"
+                    created_at: "2025-07-22T14:01:00Z"
+          '400':
+            description: Bad request - invalid or missing files
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "No files uploaded or invalid file format."
+                  status_code: 400
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Internal server error while processing files."
+                  status_code: 500
+    /api/translate/status/{batch_id}:
+      get:
+        tags:
+          - Translation
+        summary: Get translation status for a batch
+        description: Retrieves the current status of all translation jobs under a given batch. Indicates which jobs are completed, in progress, or failed, and provides download URLs for completed translations.
+        operationId: getTranslationStatus
+        parameters:
+          - name: batch_id
+            in: path
+            required: true
+            description: The ID of the translation batch
+            schema:
+              type: string
+              example: 64c1fe2d...
+        responses:
+          '200':
+            description: Batch status retrieved successfully
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/TranslationStatusResponse'
+          '404':
+            description: Batch not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  batch_id: "80fab22b-f999-421f-9ac4-c0b7e55a2158"
+                  error:
+                    code: 404
+                    message: batch not found
+          '500':
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  batch_id: "80fab22b-f999-421f-9ac4-c0b7e55a2158"
+                  error:
+                    code: 500
+                    message: server error
+    /api/text/translate:
+      post:
+        tags:
+          - Translation
+        summary: Translate text content
+        description: Translate text from source language to one or more target languages.Returns a batch ID and job-level results.
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TextTranslationRequest'
+        responses:
+          '200':
+            description: Successful translation response
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/TextTranslationResponse'
+          '400':
+            description: Invalid request
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  batch_id: "80fab22b-f999-421f-9ac4-c0b7e55a2158"
+                  error:
+                    code: 400
+                    message: text has invalid characters
+          '500':
+            description: Translation error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  batch_id: "80fab22b-f999-421f-9ac4-c0b7e55a2158"
+                  error:
+                    code: 500
+                    message: Internal issue while translating
+
+          '503':
+            description: Provider unavailable
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  batch_id: "80fab22b-f999-421f-9ac4-c0b7e55a2158"
+                  error:
+                    code: 503
+                    message: External translation provider service is unreachable or failing
+    /api/speech:
+      post:
+        tags:
+          - Speech
+        summary: Convert text to speech
+        description: Accepts text input and returns a generated speech file (e.g., MP3) along with the language used for synthesis.
+        operationId: convertTextToSpeech
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpeechRequest'
+        responses:
+          '200':
+            description: Speech file generated successfully
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/SpeechResponse'
+          '500':
+            description: Speech synthesis failed
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  
+                  error:
+                    code: 500
+                    message: Internal TTS engine error
+    /api/transcribe:
+      post:
+        tags:
+          - Speech
+        summary: Convert speech audio to text transcription
+        description: Accepts base64-encoded audio and filename. Returns the transcribed text and detected language
+        operationId: transcribeAudio
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranscriptionRequest'
+              example:
+                audio_base64: "UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=..."
+                filename: "sample.wav"
+        responses:
+          '200':
+            description: Successful transcription
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/TranscriptionResponse'
+                example:
+                  transcription: "Hello, this is a test of the Whisper speech-to-text system."
+                  language: "en"
+                  duration: 3.45
+          '400':
+            description: Invalid request (e.g., missing audio data)
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Invalid request: audio_base64 is required."
+                  details: "Missing or malformed base64 audio data."
+                  status_code: 400
+          '415':
+            description: Unsupported media type or file format
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Unsupported audio file format."
+                  details: "Only wav and mp3 files are supported."
+                  status_code: 415
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Internal server error."
+                  details: "Transcription engine failure."
+                  status_code: 500
+    /api/glossaries:
+      post:
+        tags:
+          - Glossary
+        summary: Create a new glossary
+        description: Creates a new glossary with specified name, type, source/target languages, case sensitivity, and labels.
+        operationId: createGlossary
+        security:
+          - bearerAuth: []
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlossaryCreateRequest'
+              example:
+                glossary_name: "YOUR_GLOSSARY_NAME"
+                glossary_type: "Improve Language"
+                source_language: "en"
+                target_language: "es"
+                case_sensitive_variants:
+                  as_typed: true
+                  regular_case: false
+                  uppercase: false
+                  lowercase: false
+                labels: ["LABEL_1", "LABEL_2"]
+        responses:
+          '201':
+            description: Glossary created successfully
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/GlossaryCreateResponse'
+                example:
+                  success: true
+                  message: "Glossary created successfully."
+                  data:
+                    glossary_id: "1234567890"
+                    glossary_name: "YOUR_GLOSSARY_NAME"
+                    glossary_type: "Improve Language"
+                    source_language: "en"
+                    target_language: "es"
+                    case_sensitive_variants:
+                      as_typed: true
+                      regular_case: false
+                      uppercase: false
+                      lowercase: false
+                    labels: ["LABEL_1", "LABEL_2"]
+                    created_at: "2025-06-23T18:37:37Z"
+                    updated_at: "2025-06-23T18:37:37Z"
+          '400':
+            description: Bad request - invalid input
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Invalid request payload."
+                  details: "source_language must be a valid ISO language code."
+                  status_code: 400
+          '401':
+            description: Unauthorized - missing or invalid token
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Unauthorized access."
+                  details: "Missing or invalid Authorization token."
+                  status_code: 401
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Internal server error."
+                  details: "Unexpected error occurred while creating glossary."
+                  status_code: 500
+    /api/glossaries/types:
+      get:
+        tags:
+          - Glossary
+        summary: Fetch the list of glossary types supported
+        description:   Retrieves the list of supported glossary types (e.g., unidirectional, non-translatable, abbreviation).
+        operationId: getGlossaryTypes
+        responses:
+          '200':
+            description: Successful response with glossary types
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/GlossaryTypesResponse'
+                example:
+                  status: "ok"
+                  types:
+                    - id: 1
+                      name: "unidirectional"
+                    - id: 2
+                      name: "non-translatable"
+                    - id: 3
+                      name: "Abbreviation"
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Internal server error."
+                  details: "Unexpected error while fetching glossary types."
+                  status_code: 500
+
+    /api/glossaries/case-sensitivity-types:
+      get:
+        tags:
+          - Glossary
+        summary: Fetch case sensitivity options for glossary terms
+        description:  Fetches available case sensitivity options for glossary terms.
+        operationId: getCaseSensitivityTypes
+        responses:
+          '200':
+            description: Successful response with list of case sensitivity types
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/CaseSensitivityTypesResponse'
+                example:
+                  status: ok
+                  types:
+                    - id: 1
+                      name: regular
+                    - id: 2
+                      name: regular and upper
+                    - id: 3
+                      name: upper case
+                    - id: 4
+                      name: as is
+                    - id: 5
+                      name: custom CS
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: Internal server error.
+                  details: Unexpected server failure.
+                  status_code: 500
+    /api/glossaries/part-of-speech-types:
+      get:
+        tags:
+          - Glossary
+        summary: Get supported grammatical part-of-speech (POS) categories
+        description:  Returns supported grammatical categories for glossary entries.
+        operationId: getPartOfSpeechTypes
+        responses:
+          '200':
+            description: Successful response with list of POS types
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/PartOfSpeechTypesResponse'
+                example:
+                  status: "ok"
+                  types:
+                    - id: 1
+                      name: acronym
+                    - id: 2
+                      name: adjective
+                    - id: 3
+                      name: adverb
+                    - id: 4
+                      name: conjunction
+                    - id: 5
+                      name: noun
+                    - id: 6
+                      name: preposition
+                    - id: 7
+                      name: proper noun
+                    - id: 8
+                      name: rule
+                    - id: 9
+                      name: verb
+          '404':
+            description: Resource not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Resource not found."
+                  details: "The requested part-of-speech types could not be found."
+                  status_code: 404
+          '500':
+            description: Internal Server Error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Internal server error."
+                  details: "Unexpected failure in processing the request."
+                  status_code: 500
+    /api/glossaries/{glossaryId}:
+      patch:
+        tags:
+          - Glossary
+        summary: Rename an existing glossary
+        description: Update the name and routing tables of a glossary.
+        operationId: renameGlossary
+        parameters:
+          - name: glossaryId
+            in: path
+            required: true
+            description: Unique identifier of the glossary to rename
+            schema:
+              type: string
+              example: "1234567890"
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenameGlossaryRequest'
+              example:
+                name: "DNT EN>DE"
+                routingTables:
+                  - "bayer-best"
+                  - "bayer-best-dso"
+                  - "bayer-best-HR"
+                  - "bayer-best-proc"
+                  - "bayer-best-rnd"
+                  - "regulatory_science_crop_protection"
+        responses:
+          '200':
+            description: Glossary renamed successfully
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/GenericSuccessResponse'
+                example:
+                  status: "success"
+
+          '400':
+            description: Bad request – Invalid input
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Invalid request body."
+                  details: "Glossary name must not be empty."
+                  status_code: 400
+
+          '404':
+            description: Glossary not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Glossary not found."
+                  details: "Glossary ID does not exist."
+                  status_code: 404
+
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Internal server error."
+                  details: "Unable to rename glossary due to server failure."
+                  status_code: 500
+
+      get:
+        tags:
+          - Glossary
+        summary: Fetch metadata and term count of a specific glossary
+        description: Fetch metadata and term count of a specific glossary
+        operationId: getGlossaryDetails
+        parameters:
+          - name: glossaryId
+            in: path
+            required: true
+            description: ID of the glossary to fetch
+            schema:
+              type: integer
+              example: 38792
+          - name: draft
+            in: query
+            required: false
+            description: Include draft information
+            schema:
+              type: boolean
+            example: true
+          - name: terms
+            in: query
+            required: false
+            description: Include terms in the response
+            schema:
+              type: boolean
+            example: false
+          - name: sourceGlossary
+            in: query
+            required: false
+            description: Source glossary identifier
+            schema:
+              type: string
+            example: intento
+        responses:
+          '200':
+            description: Successful retrieval of glossary details
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/GlossaryDetailsResponse'
+                example:
+                  status: "ok"
+                  id: 38792
+                  license_id: 240
+                  has_draft: true
+                  type: 2
+                  cs_type: 5
+                  name: "DNT  EN>DE"
+                  terms_source: "draft"
+                  terms:
+                    - source: "aflibercept"
+                      status: "PUBLISHED"
+                      created_at: 1680781130.1224825
+                      origin: "import"
+                      term:
+                        src: "Aflibercept"
+                        flgs: 0
+                        pos: null
+                        cstm: []
+                      created_client: "Intento Concierge"
+          '400':
+            description: Bad request - invalid parameters
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Invalid request"
+                  details: "Invalid glossary ID or query parameters."
+                  status_code: 400
+          '404':
+            description: Glossary not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Glossary not found"
+                  details: "No glossary exists with the provided ID."
+                  status_code: 404
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Internal server error."
+                  details: "Server failed to process the request."
+                  status_code: 500
+
+
+    /api/glossaries/typed:
+      get:
+        tags:
+          - Glossary
+        summary: Get all glossaries with applied types and CS options
+        description: Lists all glossaries with applied types and case sensitivity settings.
+        operationId: getTypedGlossaries
+        responses:
+          '200':
+            description: Successful retrieval of typed glossaries list
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/TypedGlossariesResponse'
+                example:
+                  status: "ok"
+                  glossaries:
+                    - id: 38793
+                      name: "DNT. EN>ES"
+                      type: 2
+                      cs_type: 5
+                      count: 2084
+                      languages: ["all"]
+                      language_pairs:
+                        - source: "all"
+                          target: "all"
+
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Internal server error."
+                  details: "Server failed to process the request."
+                  status_code: 500
+    /api/glossaries/{glossaryId}/terms:
+      post:
+        tags:
+          - Glossary
+        summary: Add, edit, or delete terms in a glossary
+        description: Add, edit, or delete terms in a glossary
+        operationId: updateGlossaryTerms
+        parameters:
+          - name: glossaryId
+            in: path
+            required: true
+            description: ID of the glossary to update
+            schema:
+              type: integer
+              example: 38793
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlossaryTermsUpdateRequest'
+              example:
+                sourceUpdate: "Glossary"
+                delete:
+                  - src: "Kliprel"
+                    flgs: 0
+                    cstm: []
+                add:
+                  - src: "CDCD"
+                    flgs: 0
+                    cstm: []
+                provider: "ABC"
+                googleConfig:
+                  provider: "ai.text.translate.google.translate_api.v3"
+                  credential_id: "bayer-google-ca"
+        responses:
+          '200':
+            description: Successful update of glossary terms
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/GlossaryTermsUpdateResponse'
+                example:
+                  status: "success"
+          '400':
+            description: Bad request - invalid input data
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Invalid request"
+                  details: "Missing required fields or invalid data."
+                  status_code: 400
+          '404':
+            description: Glossary not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Glossary not found"
+                  details: "No glossary found with the given ID."
+                  status_code: 404
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Internal server error."
+                  details: "Server failed to process the request."
+                  status_code: 500
+    /api/translate/languages:
+      get:
+        summary: Get Supported Languages
+        description: Returns the list of supported languages for translation (both source and target).
+        operationId: getSupportedLanguages
+        tags:
+          - Translation
+        responses:
+          '200':
+            description: A list of supported languages.
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/SupportedLanguage'
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Internal server error."
+                  details: "Internal error while retrieving language data."
+                  status_code: 500
+    /api/routing-designer:
+      get:
+        summary: Get Routing Designer List
+        description: Retrieves a list of available routing configurations.
+        operationId: getRoutingDesigners
+        tags:
+          - Routing
+        responses:
+          '200':
+            description: A list of routing designer records.
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/RoutingDesigner'
+                    total:
+                      type: integer
+                      example: 7
+          '404':
+            description: Resource not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Routers are not found"
+                  details: "The requested resource could not be found."
+                  status_code: 404
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Internal server error."
+                  details: "Internal error while retrieving routing data."
+                  status_code: 500
+    /api/translate/providers:
+      get:
+        tags:
+          - Providers
+        summary: Get Translation Providers
+        description: Retrieves a list of available translation providers.
+        operationId: getTranslationProviders
+        responses:
+          '200':
+            description: List of supported translation providers
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/TranslationProvider'
+                example:
+                  data:
+                    - id: "ai.text.translate.google.advanced"
+                      name: "Google Cloud Advanced Translation API"
+                      status: "active"
+                      languages: ["af", "ar", "de", "en", "es", "fr", "hi", "ja", "zh", "..."]
+                      capabilities:
+                        html: true
+                        glossary: true
+                        batch: true
+                        formality: false
+                      features:
+                        - "neural"
+                    - id: "ai.text.translate.microsoft.v3"
+                      name: "Microsoft Translator API v3.0"
+                      status: "active"
+                      languages: ["af", "ar", "de", "en", "es", "fr", "hi", "ja", "zh", "..."]
+                      capabilities:
+                        html: true
+                        glossary: false
+                        batch: true
+                        formality: false
+                      features:
+                        - "neural"
+                    - id: "ai.text.translate.deepl"
+                      name: "DeepL Translator"
+                      status: "active"
+                      languages: ["bg", "cs", "da", "de", "el", "en", "es", "et", "fi", "fr", "hu", "it", "ja", "lt", "lv", "..."]
+                      capabilities:
+                        html: true
+                        glossary: true
+                        batch: true
+                        formality: true
+                      features:
+                        - "neural"
+                        - "formality_control"
+          '404':
+            description: Resource not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "providers are not found."
+                  details: "The requested resource could not be found."
+                  status_code: 404
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Internal server error."
+                  details: "Transcription engine failure."
+                  status_code: 500
+    /api/auth/login:
+      get:
+        tags:
+          - Authentication
+        summary: Redirect user to Azure AD login page
+        description: 
+          Initiates login by redirecting the user to the Microsoft Azure AD login page with the correct query parameters.
+        operationId: initiateLogin
+        responses:
+          '302':
+            description: Redirect to Azure login page
+            headers:
+              Location:
+                description: URL to redirect user for authentication at Azure AD
+                schema:
+                  type: string
+                  format: uri
+            content:
+              text/plain:
+                schema:
+                  type: string
+                  example: "Found. Redirecting to https://login.microsoftonline.com/{tenant-id}/oauth2/v2.0/authorize?client_id=SAMPLE_CLIENT_ID&response_type=code&redirect_uri=https://app.com/auth/callback&scope=openid profile email&state=randomSecureString123"
+          '500':
+            description: configuration error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Azure AD configuration error."
+                  status_code: 500
+    /api/auth/callback:
+      get:
+        tags:
+          - Authentication
+        summary: Handle Azure AD redirect with authorization code
+        description: 
+          Endpoint hit by Azure AD after user authentication. Extracts and validates the state parameter for CSRF protection and extracts the authorization code for token exchange.
+        operationId: handleAzureCallback
+        parameters:
+          - name: code
+            in: query
+            description: Authorization code returned by Azure AD
+            required: true
+            schema:
+              type: string
+              example: "abc123"
+          - name: state
+            in: query
+            description: State parameter for CSRF protection, should match original request
+            required: true
+            schema:
+              type: string
+              example: "randomSecureString123"
+        responses:
+          '200':
+            description: Successfully received code and validated state
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/AuthCallbackResponse'
+                example:
+                  message: "Authorization code received and state validated successfully."
+                  code: "abc123"
+                  state: "randomSecureString123"
+          '400':
+            description: Bad request due to missing or invalid parameters
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Missing or invalid query parameters."
+                  details: "State parameter validation failed or code missing."
+                  status_code: 400
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Internal server error."
+                  details: "Failed to process callback."
+                  status_code: 500
+    /api/oauth2/v2.0/token:
+      post:
+        tags:
+          - Authentication
+        summary: Exchange authorization code for tokens
+        description: 
+          Backend server calls this endpoint to exchange the authorization code for access_token, id_token, and refresh_token.
+        operationId: exchangeCodeForTokens
+        requestBody:
+          required: true
+          content:
+            application/x-www-form-urlencoded:
+              schema:
+                type: object
+                required:
+                  - client_id
+                  - client_secret
+                  - code
+                  - grant_type
+                  - redirect_uri
+                properties:
+                  client_id:
+                    type: string
+                    description: Client ID of the Azure AD application
+                    example: "OUR_CLIENT_ID"
+                  client_secret:
+                    type: string
+                    description: Client secret of the Azure AD application
+                    example: "OUR_CLIENT_SECRET"
+                  code:
+                    type: string
+                    description: Authorization code received from Azure AD
+                    example: "xyz123"
+                  grant_type:
+                    type: string
+                    description: Grant type for token exchange, must be "authorization_code"
+                    example: "authorization_code"
+                  redirect_uri:
+                    type: string
+                    format: uri
+                    description: Redirect URI registered in Azure AD app
+                    example: "https://ourapp.com/auth/callback"
+        responses:
+          '200':
+            description: Successfully exchanged code for tokens
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/TokenResponse'
+                example:
+                  token_type: "Bearer"
+                  expires_in: 3599
+                  access_token: "eyJ0eXAiOiJKV1QiLCJh..."
+                  id_token: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  refresh_token: "0.ARwA7X2..."
+          '400':
+            description: Bad request (e.g., invalid code or missing params)
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Invalid request: missing or incorrect parameters."
+                  details: "Authorization code expired or invalid client secret."
+                  status_code: 400
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Internal server error."
+                  details: "Failed to exchange code for tokens."
+                  status_code: 500
+    /api/auth/session:
+      post:
+        tags:
+          - Authentication
+        summary: Create user session or issue JWT
+        description: 
+          Decodes and validates the id_token, extracts user info and roles, then creates a secure session or issues an app JWT for API access control.
+        operationId: createUserSession
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionRequest'
+              example:
+                id_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                access_token: "eyJh..."
+        responses:
+          '200':
+            description: User authenticated and session created or JWT issued
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/SessionResponse'
+                example:
+                  success: true
+                  message: "User authenticated"
+                  token: "our-app-jwt-token"
+                  user:
+                    email: "user@abc.com"
+                    name: "user123"
+                    roles:
+                      - "admin"
+                      - "glossary_maintainer"
+          '400':
+            description: Bad request due to missing or invalid tokens
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Invalid or missing tokens."
+                  details: "id_token validation failed."
+                  status_code: 400
+          '401':
+            description: Unauthorized - invalid or expired token
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Unauthorized access."
+                  details: "Token expired or invalid."
+                  status_code: 401
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Internal server error."
+                  details: "Failed to create session."
+                  status_code: 500
+    /api/auth/me:
+      get:
+        tags:
+          - Authentication
+        summary: Get logged-in user info
+        description: >
+          Returns the currently logged-in user's details using a valid session or JWT token passed via `Authorization` header or cookie.
+        operationId: getLoggedInUser
+        security:
+          - bearerAuth: []
+        responses:
+          '200':
+            description: User information retrieved successfully
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/UserInfoResponse'
+                example:
+                  email: "user@abc.com"
+                  name: "user123"
+                  roles:
+                    - "admin"
+                    - "glossary_maintainer"
+                  user_id: "1234"
+          '401':
+            description: Unauthorized - token missing or invalid
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Unauthorized access."
+                  details: "Missing or invalid authentication token."
+                  status_code: 401
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Internal server error."
+                  details: "Could not retrieve user information."
+                  status_code: 500
+    /api/auth/logout:
+      post:
+        tags:
+          - Authentication
+        summary: Log out the current user
+        description: 
+          Logs out the currently authenticated user by destroying the session or invalidating the JWT token.
+          Can also clear any server-set authentication cookies.
+        operationId: logoutUser
+        security:
+          - bearerAuth: []
+        responses:
+          '200':
+            description: User successfully logged out
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/LogoutResponse'
+                example:
+                  success: true
+                  message: "User logged out"
+          '401':
+            description: Unauthorized - missing or invalid token
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Unauthorized access."
+                  details: "Missing or invalid authentication token."
+                  status_code: 401
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Internal server error."
+                  details: "Logout operation failed."
+                  status_code: 500
+    /api/jobhistory:
+      get:
+        tags:
+          - Translation Jobs
+        summary: View translation job history
+        description: Retrieve a list of translation jobs performed by the user.
+        operationId: getJobHistory
+        responses:
+          '200':
+            description: Successful response with job history
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/JobHistoryResponse'
+                example:
+                  count: 10
+                  data:
+                    - id: "06fc5290-8cb6-4903-a9c5-8f83912bef67"
+                      status: "success"
+                      intent: "ai.text.translate"
+                      finished_at_ts: 1750413665.465983
+                      created_at_ts: 1750413664.523217
+                      meta:
+                        providers:
+                          - id: "ai.text.translate.google.translate_api.v3"
+                            vendor: "Google Cloud"
+                            logo: "https://translationportal/img/api/ggl_translate.png"
+                            description: "Advanced Translation API"
+                            auth:
+                              - credential_id: "bayer-google-ca"
+                        from: null
+                        to: "gom"
+                        format: null
+                        glossary: null
+                        smart_routing: "bayer-best"
+                        category: "default"
+                        own_keys: false
+                        size: 57
+                        translation_portal_user_agent:
+                          - "translation_portal.SyncWrapper/1.0.0"
+                          - "translation_portal.MTPortal/1.16.0"
+                        userdata: {}
+                        user_key_label: "user123.abc.com_integration"
+                        is_trace: false
+                        operation_start: 1750413664.491542
+                        detected_source_language:
+                          - "en"
+                        size_info:
+                          symbols: 57
+                          provider_symbols: 57
+                        routing:
+                          id: "bayer-best"
+                        timing:
+                          total: 0.430081
+                          providers: 0.2206439971923828
+                        client_key_label: "user123.abc.com_integration"
+                        target_provider:
+                          id: "ai.text.translate.google.translate_api.v3"
+                          vendor: "Google Cloud"
+                          logo: "https://translationportal/img/api/ggl_translate.png"
+                          description: "Advanced Translation API"
+                          auth: null
+                      is_content_cleaned: false
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Internal server error."
+                  details: "Unable to fetch job history."
+                  status_code: 500
+    /api/statistics:
+      get:
+        tags:
+          - Statistics
+        summary: Machine Translation Usage Statistics
+        description: Retrieve metrics on translation portal usage, including requests, characters, words, and error counts.
+        operationId: getTranslationUsageStats
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatisticsRequest'
+              example:
+                group:
+                  - "client"
+                filter:
+                  provider:
+                    - "ai.text.translate.google.translate_api.v3"
+                range:
+                  from: 1750333636
+                  to: 1750420036
+                  bucket: "1h"
+        responses:
+          '200':
+            description: Usage statistics successfully retrieved
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/StatisticsResponse'
+                example:
+                  status: "OK"
+                  data:
+                    - timestamp: 1750413600
+                      group:
+                        client: "5d325b7d-4fb9-4773-8f1e-f34776c445eb"
+                      metrics:
+                        requests: 2
+                        items: 2
+                        len: 80
+                        errors: 0
+                        words: 14
+                      errors:
+                        client:
+                          total: 0
+                        translation_portal:
+                          total: 0
+                        provider:
+                          total: 0
+          '400':
+            description: Invalid request (e.g., missing range)
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Invalid request: missing 'range' object."
+                  details: "The 'range' parameter with from/to values is required."
+                  status_code: 400
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Internal server error."
+                  details: "Unable to compute statistics."
+                  status_code: 500
+    /api/cache/translations:
+      get:
+        tags:
+          - Cache
+        summary: Retrieve cached translation entries with pagination
+        description: Returns translation cache entries with pagination metadata, metrics, and audit logs.
+        operationId: getCachedTranslations
+        parameters:
+          - name: limit
+            in: query
+            description: Number of entries to retrieve
+            required: false
+            schema:
+              type: integer
+              default: 10
+          - name: offset
+            in: query
+            description: Number of entries to skip (pagination offset)
+            required: false
+            schema:
+              type: integer
+              default: 0
+        responses:
+          '200':
+            description: Successful retrieval of cached translations
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/CacheTranslationsResponse'
+                example:
+                  translations:
+                    - id: "71ccbe49-1223-4c1a-8e82-e55e4b5ef9d8"
+                      Translated_Text: "Hallo"
+                      version: 3
+                      createdAt: "2025-07-08T11:53:42Z"
+                      updatedAt: "2025-07-08T12:02:17Z"
+                      previousVersionId: "71ccbe49-1223-4c1a-8e82-e55e4b5ef9d8-v2"
+                      lastModifiedBy:
+                        userId: "9f42…c1ef"
+                        name: "User123"
+                      isModified: true
+                  pagination:
+                    limit: 10
+                    offset: 0
+                    totalEntries: 124
+                  metrics:
+                    totalEntries: 124
+                    cacheHits: 7428
+                    cacheMisses: 913
+                    hitRatio: 0.89
+                    lastUpdated: "2025-07-08T12:02:17Z"
+                  audit:
+                    - translationId: "71ccbe49-1223-4c1a-8e82-e55e4b5ef9d8"
+                      action: "UPDATE"
+                      performedBy: "9f42…c1ef"
+                      timestamp: "2025-07-08T12:02:17Z"
+                      fromVersion: 2
+                      toVersion: 3
+                      diff:
+                        Translated_Text: "Hello → Hallo"
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Internal server error."
+                  details: "Database connection failed."
+                  status_code: 500
+    /api/cache/translations/{id}:
+      put:
+        tags:
+          - Cache
+        summary: Update a cached translation entry by ID
+        description: Update the translated text and modification status for a translation cache entry.
+        operationId: updateCachedTranslation
+        parameters:
+          - name: id
+            in: path
+            description: Unique identifier of the translation entry to update
+            required: true
+            schema:
+              type: string
+        requestBody:
+          description: Fields to update in the translation cache entry
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateTranslationRequest'
+              example:
+                Translated_Text: "Hello, how are you!"
+                isModified: true
+        responses:
+          '200':
+            description: Translation updated successfully
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/UpdateTranslationResponse'
+                example:
+                  message: "Translation updated successfully."
+                  translation:
+                    id: "71ccbe49-1223-4c1a-8e82-e55e4b5ef9d8"
+                    Translated_Text: "Hello, how are you!"
+                    version: 4
+                    createdAt: "2025-07-08T11:53:42Z"
+                    updatedAt: "2025-07-08T12:15:09Z"
+                    previousVersionId: "71ccbe49-1223-4c1a-8e82-e55e4b5ef9d8-v3"
+                  metrics:
+                    totalEntries: 124
+                    cacheHits: 7428
+                    cacheMisses: 913
+                    hitRatio: 0.89
+                    lastUpdated: "2025-07-08T12:15:09Z"
+                  audit:
+                    translationId: "71ccbe49-1223-4c1a-8e82-e55e4b5ef9d8"
+                    action: "UPDATE"
+                    performedBy: "9f42…c1ef"
+                    timestamp: "2025-07-08T12:15:09Z"
+                    fromVersion: 3
+                    toVersion: 4
+                    diff:
+                      content:
+                        before: "Hello → Hallo"
+                        after: "Hallo → hello, How are you"
+                      comment: "Prefer formal greeting"
+          '400':
+            description: Invalid request parameters
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Missing or empty 'Translated_Text' field."
+                  status_code: 400
+          '404':
+            description: Translation entry not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Translation entry with given ID not found."
+                  details: "No translation found with id 'abc123'."
+                  status_code: 404
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Internal server error."
+                  details: "Failed to update the translation entry."
+                  status_code: 500
+    /api/cache/translations/{translation_id}:
+      delete:
+        tags:
+          - Cache
+        summary: Delete a cached translation entry
+        description: Clear specific types of cache entries (e.g. all, modified, or non-modified).
+        operationId: deleteCachedTranslation
+        parameters:
+          - name: translation_id
+            in: path
+            description: Unique ID of the translation entry to delete
+            required: true
+            schema:
+              type: string
+          - name: isModified
+            in: query
+            description: Whether the translation is modified
+            required: false
+            schema:
+              type: boolean
+          - name: confirm
+            in: query
+            description: Confirmation flag to execute deletion
+            required: true
+            schema:
+              type: boolean
+        responses:
+          '200':
+            description: Translation cache entry deleted successfully
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/DeleteTranslationResponse'
+                example:
+                  message: "2 modified translation entries were deleted successfully."
+                  translationId: "71ccbe49-1223-4c1a-8e82-e55e4b5ef9d8"
+          '400':
+            description: Bad request invalid query params
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Deletion not confirmed."
+                  details: "Query parameter 'confirm=true' is required."
+                  status_code: 400
+          '404':
+            description: Translation ID not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Translation ID not found."
+                  details: "No translation found with ID 'abc123'."
+                  status_code: 404
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Internal server error."
+                  details: "An error occurred while attempting to delete the entry."
+                  status_code: 500
+    /api/issue-types:
+      get:
+        tags:
+          - Feedback
+        summary: Retrieve list of issue types for user feedback
+        description: Provides the list of possible issue types that users can select when submitting feedback.
+        operationId: getIssueTypes
+        responses:
+          '200':
+            description: List of issue types
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/IssueType'
+                example:
+                  - key: "incorrect_translation"
+                    label: "Incorrect translation"
+                  - key: "grammar_spelling"
+                    label: "Grammar or spelling issue"
+                  - key: "context_mismatch"
+                    label: "Context mismatch"
+                  - key: "cultural_inappropriate"
+                    label: "Cultural inappropriateness"
+                  - key: "formatting_issue"
+                    label: "Formatting issue"
+                  - key: "technical_term"
+                    label: "Technical term incorrect"
+                  - key: "missing_content"
+                    label: "Missing content"
+                  - key: "gender_mismatch"
+                    label: "Gender mismatch"
+                  - key: "formality_mismatch"
+                    label: "Formality mismatch"
+                  - key: "abbreviation_incorrect"
+                    label: "Incorrect abbreviation"
+                  - key: "other"
+                    label: "Other"
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Internal server error."
+                  details: "Failed to retrieve issue types."
+                  status_code: 500
+    /api/translation-feedback:
+      post:
+        tags:
+          - Feedback
+        summary: Submit translation feedback
+        description: Endpoint for users to submit feedback about translations.
+        operationId: submitTranslationFeedback
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslationFeedbackRequest'
+              example:
+                type: "inline"
+                fileId: "doc456"
+                fileName: "manual_fr.pdf"
+                originalText: "Start the engine."
+                translatedText: "Démarrer le moteur."
+                sourceLanguage: "en"
+                targetLanguage: "fr"
+                languagePair: "en-fr"
+                issueType: "Incorrect translation"
+                suggestedFix: "Lancer le moteur."
+                comments: "Use mechanical terms."
+                email: "user@example.com"
+                userId: "u123"
+                pageUrl: "https://app/files/123"
+                cacheId: "abc123"
+                source_hash: "d650b27a594aa6b57d0c7eae6e2f0e58e2f5be4b..."
+        responses:
+          '200':
+            description: Feedback submitted successfully
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/TranslationFeedbackResponse'
+                example:
+                  message: "Feedback submitted successfully"
+                  id: "66499fbc1e2345abc"
+          '400':
+            description: Invalid request payload
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Invalid request data."
+                  details: "Missing required field: originalText."
+                  status_code: 400
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Internal server error."
+                  details: "Failed to submit feedback."
+                  status_code: 500
+    
+      get:
+        tags:
+          - Feedback
+        summary: List all feedback entries
+        description: Retrieve all feedback submitted by users for both text and file-based translations.
+        operationId: listTranslationFeedback
+        responses:
+          '200':
+            description: A list of translation feedback entries
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/TranslationFeedbackEntry'
+                example:
+                  - id: "fbk_inline_001"
+                    type: "inline"
+                    originalText: "Start the engine."
+                    translatedText: "Démarrer le moteur."
+                    sourceLanguage: "en"
+                    targetLanguage: "fr"
+                    languagePair: "en-fr"
+                    issueType: "Incorrect translation"
+                    suggestedFix: "Lancer le moteur."
+                    comments: "Use mechanical terms."
+                    email: "user@example.com"
+                    userId: "u123"
+                    pageUrl: "https://app/ui/component/engine"
+                    cacheId: "abc123"
+                    source_hash: "d650b27a594aa6b57d0c7eae6e2f0e58e2f5be4b..."
+                    wasCached: true
+                    status: "pending"
+                    submittedAt: "2025-07-11T10:20:00Z"
+                  - id: "fbk_file_002"
+                    type: "file"
+                    fileId: "doc456"
+                    fileName: "manual_fr.pdf"
+                    originalText: "Open the valve."
+                    translatedText: "Ouvrir la valve."
+                    sourceLanguage: "en"
+                    targetLanguage: "fr"
+                    languagePair: "en-fr"
+                    issueType: "Formality mismatch"
+                    suggestedFix: "Veuillez ouvrir la valve."
+                    comments: "Should use formal tone"
+                    email: "another.user@example.com"
+                    userId: "u456"
+                    pageUrl: "https://app/files/456"
+                    cacheId: "abc-234"
+                    source_hash: "d650b27a594aa6b57d0c7eae6e2f0e58e2f5be4b..."
+                    wasCached: false
+                    status: "pending"
+                    submittedAt: "2025-07-11T10:25:00Z"
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Internal server error."
+                  details: "Failed to retrieve feedback entries."
+                  status_code: 500
+    /api/admin/feedback/{id}:
+      get:
+        tags:
+          - Feedback
+          
+        summary: Get Feedback By ID
+        description: Retrieve complete details of a specific feedback entry by its unique identifier.
+        operationId: getFeedbackById
+        parameters:
+          - name: id
+            in: path
+            required: true
+            description: Unique identifier of the feedback entry
+            schema:
+              type: string
+              example: fbk_file_002
+        responses:
+          '200':
+            description: Feedback entry details
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/TranslationFeedbackEntry'
+                example:
+                  id: "fbk_file_002"
+                  type: "file"
+                  fileId: "doc456"
+                  fileName: "manual_fr.pdf"
+                  originalText: "Open the valve."
+                  translatedText: "Ouvrir la valve."
+                  sourceLanguage: "en"
+                  targetLanguage: "fr"
+                  languagePair: "en-fr"
+                  issueType: "Formality mismatch"
+                  suggestedFix: "Veuillez ouvrir la valve."
+                  comments: "Should use formal tone"
+                  email: "another.user@example.com"
+                  userId: "u456"
+                  pageUrl: "https://app/files/456"
+                  cacheId: "abc-234"
+                  source_hash: "uyyu4y7487543685734987398…"
+                  wasCached: false
+                  status: "pending"
+                  submittedAt: "2025-07-11T10:25:00Z"
+          '404':
+            description: Feedback not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Feedback entry not found."
+                  status_code: 404
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Internal server error."
+                  status_code: 500
+  
+      patch:
+        tags:
+          - Feedback
+        
+        summary: Update Feedback Status
+        description: Update the status and decision of a feedback entry.
+        operationId: updateFeedbackStatus
+        parameters:
+          - name: id
+            in: path
+            required: true
+            description: Feedback entry unique identifier
+            schema:
+              type: string
+              example: fbk_file_002
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    description: Current status of the feedback
+                    enum: [pending, reviewed, fixed, rejected]
+                    example: fixed
+                  decision:
+                    type: string
+                    description: Decision made after review
+                    enum: [accepted, rejected]
+                    example: accepted
+                  reviewedBy:
+                    type: string
+                    description: Email of the reviewer/admin
+                    format: email
+                    example: admin@example.com
+                required:
+                  - status
+                  - decision
+                  - reviewedBy
+        responses:
+          '200':
+            description: Updated feedback entry details
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/TranslationFeedbackEntryWithReview'
+                example:
+                  _id: "60d21b4667d0d8992e610c85"
+                  type: "file"
+                  fileId: "doc456"
+                  fileName: "translated_manual_fr.pdf"
+                  originalText: "Start the engine."
+                  translatedText: "Démarrer le moteur."
+                  sourceLanguage: "en"
+                  targetLanguage: "fr"
+                  languagePair: "en-fr"
+                  issueType: "Technical term incorrect"
+                  suggestedFix: "Lancer le moteur."
+                  comments: "Use consistent mechanical terms."
+                  email: "user@example.com"
+                  userId: "u123"
+                  pageUrl: "https://app/files/123"
+                  cacheId: "abc123"
+                  source_hash: "d650b27a594aa6b57d0c7eae6e2f0e58e2f5be4b..."
+                  wasCached: true
+                  status: "fixed"
+                  decision: "accepted"
+                  reviewedBy: "admin@example.com"
+                  reviewedAt: "2025-07-07T14:30:00Z"
+                  expiresAt: "2028-07-07T14:30:00Z"
+                  createdAt: "2025-07-07T12:00:00Z"
+                  updatedAt: "2025-07-07T14:30:00Z"
+          '400':
+            description: Invalid input
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Invalid status or decision value."
+                  status_code: 400
+          '404':
+            description: Feedback not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Feedback entry not found."
+                  status_code: 404
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Internal server error."
+                  status_code: 500
+    /api/admin/feedback/{id}/invalidate-cache:
+      post:
+        tags:
+          - Feedback
+        
+        summary: Invalidate Cache for Feedback Entry
+        description: Invalidate the cache associated with a specific feedback entry.
+        operationId: invalidateCacheForFeedback
+        parameters:
+          - name: id
+            in: path
+            required: true
+            description: Feedback entry unique identifier
+            schema:
+              type: string
+              example: fbk_inline_001
+        responses:
+          '200':
+            description: Cache invalidation success message
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: "Cache invalidated for abc123"
+          '404':
+            description: Feedback entry not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Feedback entry not found."
+                  status_code: 404
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Internal server error."
+                  status_code: 500
+    /api/admin/notifications/send:
+      post:
+        tags:
+          - Glossary Notifications
+        summary: Notify glossary owner after user adds or updates glossary term
+        description: Sends a notification to the glossary owner when a user adds or updates glossary terms.Notification includes term changes, action type, and the user who made the change.
+        operationId: notifyGlossaryOwner
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotifyGlossaryOwnerRequest'
+              example:
+                recipient_user_id: "owner-uuid-123"
+                type: "glossary.change.request"
+                message: "New term 'Crew → Unit' submitted by user123 requires your review."
+                related_glossary_id: 84606
+                term:
+                  src: "Crew"
+                  tgt: "Unit"
+                created_by: "user123"
+        responses:
+          '200':
+            description: Notification sent successfully
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/NotificationResponse'
+                example:
+                  status: "success"
+                  message: "Notification sent successfully."
+                  notification:
+                    id: "notif-7890-uuid"
+                    recipient_user_id: "owner-uuid-123"
+                    type: "glossary.change.request"
+                    message: "New term 'Crew → Unit' submitted by user123 requires your review."
+                    related_glossary_id: 84606
+                    term:
+                      src: "Crew"
+                      tgt: "Unit"
+                    created_by: "user123"
+                    created_at: "2025-07-18T12:05:00Z"
+                    is_read: false
+          '400':
+            description: Invalid request payload
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Invalid notification request payload."
+                  details: "Missing required fields or invalid data."
+                  status_code: 400
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Internal server error."
+                  details: "Failed to send notification."
+                  status_code: 500
+    /api/user/notifications/send:
+      post:
+        tags:
+          - Glossary Notifications
+        summary: Notify user after glossary owner reviews the term (approval or rejection)
+        description: Notifies the submitting user after their glossary term is reviewed (approved or rejected). Triggered automatically by the backend.
+        operationId: notifyUserAfterReview
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/NotifyUserApprovalRequest'
+                  - $ref: '#/components/schemas/NotifyUserRejectionRequest'
+              examples:
+                approval:
+                  summary: Approval example
+                  value:
+                    recipient_user_id: "user-id-user123"
+                    type: "glossary.change.response"
+                    message: "Your term 'team' → 'team' was approved by the glossary owner."
+                    term_id: "term-001"
+                    status: "APPROVED"
+                    comment: ""
+                    reviewed_by: "glossary_owner@domain.com"
+                rejection:
+                  summary: Rejection example
+                  value:
+                    recipient_user_id: "user-id-user123"
+                    type: "glossary.change.response"
+                    message: "Your term 'squard' → 'squard' was rejected: Use 'Team' instead of 'Squard'."
+                    term_id: "term-002"
+                    status: "REJECTED"
+                    comment: "Use 'Team' instead of 'Squard'."
+                    reviewed_by: "glossary_owner@domain.com"
+        responses:
+          '200':
+            description: Notification sent successfully
+            content:
+              application/json:
+                schema:
+                  oneOf:
+                    - $ref: '#/components/schemas/NotifyUserApprovalResponse'
+                    - $ref: '#/components/schemas/NotifyUserRejectionResponse'
+                examples:
+                  approval:
+                    summary: Approval response
+                    value:
+                      status: "success"
+                      message: "Notification sent successfully."
+                      notification:
+                        id: "notif-101"
+                        recipient_user_id: "user-id-user123"
+                        type: "glossary.change.response"
+                        term_id: "term-001"
+                        status: "APPROVED"
+                        message: "Your term 'team' → 'team' was approved by the glossary owner."
+                        comment: ""
+                        reviewed_by: "glossary_owner@domain.com"
+                        created_at: "2025-07-18T13:48:00Z"
+                        is_read: false
+                  rejection:
+                    summary: Rejection response
+                    value:
+                      status: "success"
+                      message: "Notification sent successfully."
+                      notification:
+                        id: "notif-102"
+                        recipient_user_id: "user-id-user123"
+                        type: "glossary.change.response"
+                        term_id: "term-002"
+                        status: "REJECTED"
+                        message: "Your term 'squard' → 'squard' was rejected by the glossary owner: Use 'Team' instead of 'Squard'."
+                        comment: "Use 'Team' instead of 'Squard'."
+                        reviewed_by: "glossary_owner@domain.com"
+                        created_at: "2025-07-18T13:52:00Z"
+                        is_read: true
+          '400':
+            description: Invalid request payload
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Invalid notification request payload."
+                  details: "Missing required fields or invalid data."
+                  status_code: 400
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Internal server error."
+                  details: "Failed to send notification."
+                  status_code: 500
+
+
+
+    /api/glossaries/review/{term_id}:
+      post:
+        tags:
+          - Glossary Notifications
+        summary: Approve or reject an individual glossary term
+        description: Allows the glossary owner to approve or reject a specific term by term_id, with optional comments.
+        operationId: reviewGlossaryTerm
+        parameters:
+          - name: term_id
+            in: path
+            required: true
+            description: The ID of the glossary term to review
+            schema:
+              type: string
+              example: term-001
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlossaryTermReviewRequest'
+              examples:
+                approve:
+                  summary: Approve term example
+                  value:
+                    status: "APPROVED"
+                    reviewed_by: "glossary_owner@domain.com"
+                    comment: ""
+                reject:
+                  summary: Reject term example
+                  value:
+                    status: "REJECTED"
+                    reviewed_by: "glossary_owner@domain.com"
+                    comment: "Use 'Team' instead of 'Squard'."
+        responses:
+          '200':
+            description: Review processed successfully
+            content:
+              application/json:
+                schema:
+                  oneOf:
+                    - $ref: '#/components/schemas/ApproveResponse'
+                    - $ref: '#/components/schemas/RejectResponse'
+                examples:
+                  approveResponse:
+                    summary: Approved term response
+                    value:
+                      status: "success"
+                      message: "Term 'team → team' has been approved successfully."
+                      term_id: "term-001"
+                      new_status: "APPROVED"
+                      reviewed_by: "glossary_owner@domain.com"
+                      reviewed_at: "2025-07-18T13:47:00Z"
+                      comment: ""
+                  rejectResponse:
+                    summary: Rejected term response
+                    value:
+                      status: "success"
+                      message: "Review saved successfully."
+                      term_id: "term-002"
+                      new_status: "REJECTED"
+          '400':
+            description: Invalid request
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Invalid request: missing required fields or invalid status."
+                  details: "status must be either APPROVED or REJECTED."
+                  status_code: 400
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                example:
+                  error: true
+                  message: "Internal server error."
+                  details: "Review processing failure."
+                  status_code: 500
+    
+
+  components:
+    securitySchemes:
+      bearerAuth:
+        type: http
+        scheme: bearer
+        bearerFormat: JWT
+    schemas:
+      TranslationRequest:
+        type: object
+        required:
+          - document_ids
+          - target_languages
+          - async
+        properties:
+          document_ids:
+            type: array
+            items:
+              type: string
+            example: ["doc1", "doc2"]
+          target_languages:
+            type: array
+            items:
+              type: string
+            example: ["fr", "de"]
+          lang-detect:
+            type: boolean
+            example: true
+          async:
+            type: boolean
+            example: true
+          source_language:
+            type: string
+            example: auto
+          services:
+            type: object
+            properties:
+              routing:
+                type: string
+                example: auto
+                description: 'Use "auto" or user-defined value'
+              provider:
+                type: string
+                example: auto
+                description: 'Use "auto" or user-defined value'
+
+      TranslationResponse:
+        type: object
+        properties:
+          batch_id:
+            type: string
+            example: batch_001
+          translation_jobs:
+            type: array
+            items:
+              type: object
+              properties:
+                job_id:
+                  type: string
+                  example: job_doc123_fr
+                document_id:
+                  type: string
+                  example: doc123
+                target_language:
+                  type: string
+                  example: fr
+                status:
+                  type: string
+                  example: queued
+      DocumentUploadResponse:
+        type: object
+        properties:
+          document_id:
+            type: string
+            description: Unique identifier for the uploaded document
+            example: "doc-123abc"
+          filename:
+            type: string
+            description: Original filename of the uploaded document
+            example: "file1.pdf"
+          created_at:
+            type: string
+            format: date-time
+            description: Timestamp when the document was uploaded
+            example: "2025-07-22T14:00:00Z"
+
+      DownloadResponse:
+        type: object
+        properties:
+          batch_id:
+            type: string
+            example: batch_001
+          successful_jobs:
+            type: array
+            items:
+              type: object
+              properties:
+                job_id:
+                  type: string
+                  example: job_doc123_fr
+                document_id:
+                  type: string
+                  example: doc123
+                filename:
+                  type: string
+                  example: contract_en_fr.pdf
+                target_language:
+                  type: string
+                  example: fr
+                download_url:
+                  type: string
+                  example: /api/files/download/job_doc123_fr
+          failed_jobs:
+            type: array
+            items:
+              type: object
+              properties:
+                job_id:
+                  type: string
+                  example: job_doc124_fr
+                document_id:
+                  type: string
+                  example: doc124
+                filename:
+                  type: string
+                  example: invoice.docx
+                target_language:
+                  type: string
+                  example: fr
+                error_message:
+                  type: string
+                  example: Translation engine timeout
+      TranslationStatusResponse:
+        type: object
+        properties:
+          batch_id:
+            type: string
+            example: 64c1fe2d...
+          status:
+            type: string
+            description: Overall batch status
+            example: partially_completed
+          completed:
+            type: array
+            items:
+              type: object
+              properties:
+                job_id:
+                  type: string
+                  example: 345dfgh..
+                file_name:
+                  type: string
+                  example: resume.pdf
+                target_language:
+                  type: string
+                  example: fr
+                result_url:
+                  type: string
+                  format: uri
+                  example: https://yourdomain.com/downloads/resume_fr.pdf
+                routing:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      example: abc
+                glossary:
+                  nullable: true
+                  type: string
+                  example: null
+                provider:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      example: microsoft translator
+          in_progress:
+            type: array
+            items:
+              type: object
+              properties:
+                job_id:
+                  type: string
+                  example: we345dfgh..
+                file_name:
+                  type: string
+                  example: resume.pdf
+                target_language:
+                  type: string
+                  example: de
+          failed:
+            type: array
+            items:
+              type: object
+              properties:
+                job_id:
+                  type: string
+                  example: 167fdfgh..
+                file_name:
+                  type: string
+                  example: coverletter.docx
+                target_language:
+                  type: string
+                  example: es
+                error:
+                  type: string
+                  example: Translation model timeout
+      TextTranslationRequest:
+        type: object
+        required:
+          - data
+          - source_language
+          - target_language
+        properties:
+          data:
+            type: string
+            description: Text content to translate
+            example: "text content"
+          source_language:
+            type: string
+            example: "auto"
+            description: Source language code or 'auto' for automatic detection
+          target_language:
+            type: array
+            items:
+              type: string
+            example: ["fr"]
+            description: List of target language codes
+          size:
+            type: string
+            example: "12"
+            description: Size parameter (optional)
+          services:
+            type: object
+            properties:
+              routing:
+                type: string
+                example: "auto"
+                description: Optional routing option, e.g., 'auto' or specific routing
+              provider:
+                type: string
+                example: "auto"
+                description: Optional provider name
+
+      TextTranslationResponse:
+        type: object
+        properties:
+          batch_id:
+            type: string
+            example: "152af6d9-34c7-48c3-aa24-3d03691f4d5a"
+            description: Batch identifier for the translation request
+          source_language:
+            type: string
+            example: ""
+            description: Detected or specified source language
+          sucessful_jobs:
+            type: array
+            items:
+              type: object
+              properties:
+                job_id:
+                  type: string
+                  example: "we34r.."
+                translated_data:
+                  type: string
+                  example: "translated text here"
+                target_language:
+                  type: string
+                  example: "german"
+          failed_jobs:
+            type: array
+            items:
+              type: object
+              properties:
+                job_id:
+                  type: string
+                  example: "we34r.."
+                error_message:
+                  type: string
+                  example: "translation failed"
+                target_language:
+                  type: string
+                  example: "Hindi"
+      SpeechRequest:
+        type: object
+        required:
+          - text
+        properties:
+          text:
+            type: string
+            example: "Hi all, how are you doing?"
+            description: The text content to be converted into speech
+
+      SpeechResponse:
+        type: object
+        properties:
+          speech:
+            type: string
+            example: "temp.mp3"
+            description: The filename or path to the generated speech file
+          language:
+            type: string
+            example: "en"
+            description: Language used in the speech output
+      TranscriptionRequest:
+        type: object
+        required:
+          - audio_base64
+          - filename
+        properties:
+          audio_base64:
+            type: string
+            description: Base64-encoded audio data to transcribe
+            example: "UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=..."
+          filename:
+            type: string
+            description: Original audio filename with extension (e.g., sample.wav)
+            example: "sample.wav"
+
+      TranscriptionResponse:
+        type: object
+        properties:
+          transcription:
+            type: string
+            description: Text transcription of the audio
+            example: "Hello, this is a test of the Whisper speech-to-text system."
+          language:
+            type: string
+            description: Detected language code of the audio
+            example: "en"
+          duration:
+            type: number
+            format: float
+            description: Duration of the audio in seconds
+            example: 3.45
+
+      GlossaryCreateRequest:
+        type: object
+        required:
+          - glossary_name
+          - glossary_type
+          - source_language
+          - target_language
+          - case_sensitive_variants
+        properties:
+          glossary_name:
+            type: string
+            description: Name of the glossary
+            example: "YOUR_GLOSSARY_NAME"
+          glossary_type:
+            type: string
+            description: Type of the glossary
+            example: "Improve Language"
+          source_language:
+            type: string
+            description: Source language code (ISO 639-1)
+            example: "en"
+          target_language:
+            type: string
+            description: Target language code (ISO 639-1)
+            example: "es"
+          case_sensitive_variants:
+            type: object
+            required:
+              - as_typed
+              - regular_case
+              - uppercase
+              - lowercase
+            properties:
+              as_typed:
+                type: boolean
+                example: true
+              regular_case:
+                type: boolean
+                example: false
+              uppercase:
+                type: boolean
+                example: false
+              lowercase:
+                type: boolean
+                example: false
+          labels:
+            type: array
+            description: Optional labels for the glossary
+            items:
+              type: string
+            example: ["LABEL_1", "LABEL_2"]
+
+      GlossaryCreateResponse:
+        type: object
+        properties:
+          success:
+            type: boolean
+            example: true
+          message:
+            type: string
+            example: "Glossary created successfully."
+          data:
+            type: object
+            properties:
+              glossary_id:
+                type: string
+                example: "1234567890"
+              glossary_name:
+                type: string
+                example: "YOUR_GLOSSARY_NAME"
+              glossary_type:
+                type: string
+                example: "Improve Language"
+              source_language:
+                type: string
+                example: "en"
+              target_language:
+                type: string
+                example: "es"
+              case_sensitive_variants:
+                type: object
+                properties:
+                  as_typed:
+                    type: boolean
+                    example: true
+                  regular_case:
+                    type: boolean
+                    example: false
+                  uppercase:
+                    type: boolean
+                    example: false
+                  lowercase:
+                    type: boolean
+                    example: false
+              labels:
+                type: array
+                items:
+                  type: string
+                example: ["LABEL_1", "LABEL_2"]
+              created_at:
+                type: string
+                format: date-time
+                example: "2025-06-23T18:37:37Z"
+              updated_at:
+                type: string
+                format: date-time
+                example: "2025-06-23T18:37:37Z"
+      
+      GlossaryType:
+        type: object
+        properties:
+          id:
+            type: integer
+            example: 1
+          name:
+            type: string
+            example: "unidirectional"
+
+      GlossaryTypesResponse:
+        type: object
+        properties:
+          status:
+            type: string
+            example: "ok"
+          types:
+            type: array
+            items:
+              $ref: '#/components/schemas/GlossaryType'
+
+      CaseSensitivityType:
+        type: object
+        properties:
+          id:
+            type: integer
+            example: 1
+          name:
+            type: string
+            example: regular
+
+      CaseSensitivityTypesResponse:
+        type: object
+        properties:
+          status:
+            type: string
+            example: ok
+          types:
+            type: array
+            items:
+              $ref: '#/components/schemas/CaseSensitivityType'
+      PartOfSpeechType:
+        type: object
+        properties:
+          id:
+            type: integer
+            example: 1
+          name:
+            type: string
+            example: "acronym"
+
+      PartOfSpeechTypesResponse:
+        type: object
+        properties:
+          status:
+            type: string
+            example: "ok"
+          types:
+            type: array
+            items:
+              $ref: '#/components/schemas/PartOfSpeechType'
+
+      RenameGlossaryRequest:
+        type: object
+        required:
+          - name
+          - routingTables
+        properties:
+          name:
+            type: string
+            description: New name for the glossary
+            example: "DNT EN>DE"
+          routingTables:
+            type: array
+            items:
+              type: string
+            description: List of routing tables associated with the glossary
+            example:
+              - "bayer-best"
+              - "bayer-best-dso"
+              - "bayer-best-HR"
+              - "bayer-best-proc"
+              - "bayer-best-rnd"
+              - "regulatory_science_crop_protection"
+
+      GenericSuccessResponse:
+        type: object
+        properties:
+          status:
+            type: string
+            example: "success"
+
+
+      TypedGlossariesResponse:
+        type: object
+        properties:
+          status:
+            type: string
+            description: Response status
+            example: "ok"
+          glossaries:
+            type: array
+            items:
+              $ref: '#/components/schemas/Glossary'
+
+      Glossary:
+        type: object
+        properties:
+          id:
+            type: integer
+            example: 38793
+          name:
+            type: string
+            example: "DNT. EN>ES"
+          type:
+            type: integer
+            description: Glossary type identifier
+            example: 2
+          cs_type:
+            type: integer
+            description: Case sensitivity type identifier
+            example: 5
+          count:
+            type: integer
+            description: Number of entries in the glossary
+            example: 2084
+          languages:
+            type: array
+            description: Languages covered by the glossary
+            items:
+              type: string
+            example: ["all"]
+          language_pairs:
+            type: array
+            description: Source-target language pairs
+            items:
+              $ref: '#/components/schemas/LanguagePair'
+
+      LanguagePair:
+        type: object
+        properties:
+          source:
+            type: string
+            example: "all"
+          target:
+            type: string
+            example: "all"
+
+      GlossaryTermsUpdateRequest:
+        type: object
+        properties:
+          sourceUpdate:
+            type: string
+            description: Source of the update
+            example: "Glossary"
+          delete:
+            type: array
+            description: List of terms to delete
+            items:
+              $ref: '#/components/schemas/GlossaryTerm'
+          add:
+            type: array
+            description: List of terms to add
+            items:
+              $ref: '#/components/schemas/GlossaryTerm'
+          provider:
+            type: string
+            description: Provider name
+            example: "ABC"
+          googleConfig:
+            type: object
+            properties:
+              provider:
+                type: string
+                example: "ai.text.translate.google.translate_api.v3"
+              credential_id:
+                type: string
+                example: "bayer-google-ca"
+
+      GlossaryTerm:
+        type: object
+        properties:
+          src:
+            type: string
+            description: Source term
+            example: "Kliprel"
+          flgs:
+            type: integer
+            description: Flags for the term
+            example: 0
+          pos:
+            nullable: true
+            type: string
+            example: null
+          cstm:
+            type: array
+            description: Custom attributes for the term
+            items:
+              type: string
+            example: []
+
+      GlossaryTermsUpdateResponse:
+        type: object
+        properties:
+          status:
+            type: string
+            example: "success"
+
+      GlossaryDetailsResponse:
+        type: object
+        properties:
+          status:
+            type: string
+            example: "ok"
+          id:
+            type: integer
+            example: 38792
+          license_id:
+            type: integer
+            example: 240
+          has_draft:
+            type: boolean
+            example: true
+          type:
+            type: integer
+            example: 2
+          cs_type:
+            type: integer
+            example: 5
+          name:
+            type: string
+            example: "DNT  EN>DE"
+          terms_source:
+            type: string
+            example: "draft"
+          terms:
+            type: array
+            description: List of terms in the glossary
+            items:
+              $ref: '#/components/schemas/GlossaryTermDetail'
+
+      GlossaryTermDetail:
+        type: object
+        properties:
+          source:
+            type: string
+            example: "aflibercept"
+          status:
+            type: string
+            example: "PUBLISHED"
+          created_at:
+            type: number
+            format: double
+            description: Timestamp of term creation
+            example: 1680781130.1224825
+          origin:
+            type: string
+            example: "import"
+          term:
+            $ref: '#/components/schemas/GlossaryTerm'
+          created_client:
+            type: string
+            example: "Intento Concierge"
+      SupportedLanguage:
+        type: object
+        properties:
+          iso_name:
+            type: string
+            example: "Afar"
+            description: Human-readable name of the language
+          code:
+            type: string
+            example: "aa"
+            description: ISO 639-1 code of the language
+          direction:
+            type: string
+            example: "left-to-right"
+            description: Text direction for the language (e.g., "left-to-right", "right-to-left")
+      RoutingDesigner:
+        type: object
+        properties:
+          rt_id:
+            type: integer
+            example: 9
+            description: Unique identifier of the routing
+          name:
+            type: string
+            example: "best_healthcare"
+            description: Name of the routing
+          description:
+            type: string
+            example: "routing for the Healthcare domain"
+            description: Description of the routing configuration
+          updated_at:
+            type: string
+            format: date-time
+            example: "2024-12-18T14:12:35.306Z"
+            description: Last updated timestamp
+          updated_by:
+            type: string
+            format: uuid
+            example: "04ebba4b-d03f-418d-9593-97e699f21a63"
+            description: UUID of the user who last updated the routing
+          is_public:
+            type: boolean
+            example: true
+            description: Whether the routing is public
+          is_active:
+            type: boolean
+            example: true
+            description: Whether the routing is currently active
+          is_allowed:
+            type: boolean
+            example: true
+            description: Whether the user is allowed to use this routing
+      TranslationProvider:
+        type: object
+        properties:
+          id:
+            type: string
+            description: Unique identifier of the translation provider
+            example: "ai.text.translate.google.advanced"
+          name:
+            type: string
+            description: Provider display name
+            example: "Google Cloud Advanced Translation API"
+          status:
+            type: string
+            description: Current status of the provider
+            example: "active"
+          languages:
+            type: array
+            description: Supported language codes
+            items:
+              type: string
+            example: ["af", "ar", "de", "en", "es", "fr", "hi", "ja", "zh"]
+          capabilities:
+            type: object
+            properties:
+              html:
+                type: boolean
+                example: true
+              glossary:
+                type: boolean
+                example: true
+              batch:
+                type: boolean
+                example: true
+              formality:
+                type: boolean
+                example: false
+          features:
+            type: array
+            description: List of supported features
+            items:
+              type: string
+            example: ["neural", "formality_control"]
+      AuthCallbackResponse:
+        type: object
+        properties:
+          message:
+            type: string
+            example: "Authorization code received and state validated successfully."
+          code:
+            type: string
+            description: Authorization code from Azure AD
+            example: "abc123"
+          state:
+            type: string
+            description: State parameter used for CSRF protection
+            example: "randomSecureString123"
+      TokenResponse:
+        type: object
+        properties:
+          token_type:
+            type: string
+            example: "Bearer"
+          expires_in:
+            type: integer
+            description: Seconds until the token expires
+            example: 3599
+          access_token:
+            type: string
+            description: Access token for API authorization
+            example: "eyJ0eXAiOiJKV1QiLCJh..."
+          id_token:
+            type: string
+            description: ID token containing user info
+            example: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+          refresh_token:
+            type: string
+            description: Refresh token to obtain new access tokens
+            example: "0.ARwA7X2..."
+      SessionRequest:
+        type: object
+        required:
+          - id_token
+          - access_token
+        properties:
+          id_token:
+            type: string
+            description: ID token received from Azure AD
+            example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          access_token:
+            type: string
+            description: Access token received from Azure AD
+            example: "eyJh..."
+    
+      SessionResponse:
+        type: object
+        properties:
+          success:
+            type: boolean
+            example: true
+          message:
+            type: string
+            example: "User authenticated"
+          token:
+            type: string
+            description: Application JWT token issued for the session
+            example: "our-app-jwt-token"
+          user:
+            type: object
+            properties:
+              email:
+                type: string
+                example: "user@abc.com"
+              name:
+                type: string
+                example: "user123"
+              roles:
+                type: array
+                items:
+                  type: string
+                example: ["admin", "glossary_maintainer"]
+      UserInfoResponse:
+        type: object
+        properties:
+          email:
+            type: string
+            example: "user@abc.com"
+          name:
+            type: string
+            example: "user123"
+          roles:
+            type: array
+            items:
+              type: string
+            example: ["admin", "glossary_maintainer"]
+          user_id:
+            type: string
+            example: "1234"
+      LogoutResponse:
+        type: object
+        properties:
+          success:
+            type: boolean
+            example: true
+          message:
+            type: string
+            example: "User logged out"
+      JobHistoryResponse:
+        type: object
+        properties:
+          count:
+            type: integer
+            example: 10
+          data:
+            type: array
+            items:
+              $ref: '#/components/schemas/JobHistoryItem'
+
+      JobHistoryItem:
+        type: object
+        properties:
+          id:
+            type: string
+          status:
+            type: string
+          intent:
+            type: string
+          finished_at_ts:
+            type: number
+            format: float
+          created_at_ts:
+            type: number
+            format: float
+          meta:
+            $ref: '#/components/schemas/JobMeta'
+          is_content_cleaned:
+            type: boolean
+
+      JobMeta:
+        type: object
+        properties:
+          providers:
+            type: array
+            items:
+              $ref: '#/components/schemas/Provider'
+          from:
+            type: string
+            nullable: true
+          to:
+            type: string
+          format:
+            type: string
+            nullable: true
+          glossary:
+            type: string
+            nullable: true
+          smart_routing:
+            type: string
+          category:
+            type: string
+          own_keys:
+            type: boolean
+          size:
+            type: integer
+          translation_portal_user_agent:
+            type: array
+            items:
+              type: string
+          userdata:
+            type: object
+          user_key_label:
+            type: string
+          is_trace:
+            type: boolean
+          operation_start:
+            type: number
+            format: float
+          detected_source_language:
+            type: array
+            items:
+              type: string
+          size_info:
+            type: object
+            properties:
+              symbols:
+                type: integer
+              provider_symbols:
+                type: integer
+          routing:
+            type: object
+            properties:
+              id:
+                type: string
+          timing:
+            type: object
+            properties:
+              total:
+                type: number
+                format: float
+              providers:
+                type: number
+                format: float
+          client_key_label:
+            type: string
+          target_provider:
+            $ref: '#/components/schemas/Provider'
+
+      Provider:
+        type: object
+        properties:
+          id:
+            type: string
+          vendor:
+            type: string
+          logo:
+            type: string
+          description:
+            type: string
+          auth:
+            type: array
+            nullable: true
+            items:
+              type: object
+              properties:
+                credential_id:
+                  type: string
+      StatisticsRequest:
+        type: object
+        properties:
+          group:
+            type: array
+            items:
+              type: string
+            example: ["client"]
+          filter:
+            type: object
+            properties:
+              provider:
+                type: array
+                items:
+                  type: string
+                example: ["ai.text.translate.google.translate_api.v3"]
+          range:
+            type: object
+            required:
+              - from
+              - to
+              - bucket
+            properties:
+              from:
+                type: integer
+                example: 1750333636
+              to:
+                type: integer
+                example: 1750420036
+              bucket:
+                type: string
+                example: "1h"
+
+      StatisticsResponse:
+        type: object
+        properties:
+          status:
+            type: string
+            example: "OK"
+          data:
+            type: array
+            items:
+              $ref: '#/components/schemas/StatisticsDataPoint'
+
+      StatisticsDataPoint:
+        type: object
+        properties:
+          timestamp:
+            type: integer
+            example: 1750413600
+          group:
+            type: object
+            additionalProperties:
+              type: string
+            example:
+              client: "5d325b7d-4fb9-4773-8f1e-f34776c445eb"
+          metrics:
+            type: object
+            properties:
+              requests:
+                type: integer
+                example: 2
+              items:
+                type: integer
+                example: 2
+              len:
+                type: integer
+                example: 80
+              errors:
+                type: integer
+                example: 0
+              words:
+                type: integer
+                example: 14
+          errors:
+            type: object
+            properties:
+              client:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    example: 0
+              translation_portal:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    example: 0
+              provider:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    example: 0
+      CacheTranslationsResponse:
+        type: object
+        properties:
+          translations:
+            type: array
+            items:
+              $ref: '#/components/schemas/TranslationEntry'
+          pagination:
+            $ref: '#/components/schemas/Pagination'
+          metrics:
+            $ref: '#/components/schemas/Metrics'
+          audit:
+            type: array
+            items:
+              $ref: '#/components/schemas/AuditLog'
+      TranslationEntry:
+        type: object
+        properties:
+          id:
+            type: string
+          Translated_Text:
+            type: string
+          version:
+            type: integer
+          createdAt:
+            type: string
+            format: date-time
+          updatedAt:
+            type: string
+            format: date-time
+          previousVersionId:
+            type: string
+          lastModifiedBy:
+            $ref: '#/components/schemas/UserInfo'
+          isModified:
+            type: boolean
+      UserInfo:
+        type: object
+        properties:
+          userId:
+            type: string
+          name:
+            type: string
+
+      Pagination:
+        type: object
+        properties:
+          limit:
+            type: integer
+          offset:
+            type: integer
+          totalEntries:
+            type: integer
+
+      Metrics:
+        type: object
+        properties:
+          totalEntries:
+            type: integer
+          cacheHits:
+            type: integer
+          cacheMisses:
+            type: integer
+          hitRatio:
+            type: number
+            format: float
+          lastUpdated:
+            type: string
+            format: date-time
+
+      AuditLog:
+        type: object
+        properties:
+          translationId:
+            type: string
+          action:
+            type: string
+          performedBy:
+            type: string
+          timestamp:
+            type: string
+            format: date-time
+          fromVersion:
+            type: integer
+          toVersion:
+            type: integer
+          diff:
+            type: object
+            properties:
+              content:
+                type: object
+                properties:
+                  before:
+                    type: string
+                  after:
+                    type: string
+              comment:
+                type: string
+            additionalProperties:
+              type: string
+
+      UpdateTranslationRequest:
+        type: object
+        required:
+          - Translated_Text
+          - isModified
+        properties:
+          Translated_Text:
+            type: string
+            description: Updated translated text
+            example: "Hello, how are you!"
+          isModified:
+            type: boolean
+            description: Whether the translation entry has been modified
+            example: true
+
+      UpdateTranslationResponse:
+        type: object
+        properties:
+          message:
+            type: string
+            example: "Translation updated successfully."
+          translation:
+            type: object
+            properties:
+              id:
+                type: string
+              Translated_Text:
+                type: string
+              version:
+                type: integer
+              createdAt:
+                type: string
+                format: date-time
+              updatedAt:
+                type: string
+                format: date-time
+              previousVersionId:
+                type: string
+          metrics:
+            $ref: '#/components/schemas/Metrics'
+          audit:
+            $ref: '#/components/schemas/AuditLog'
+      DeleteTranslationResponse:
+        type: object
+        properties:
+          message:
+            type: string
+            example: "2 modified translation entries were deleted successfully."
+          translationId:
+            type: string
+            example: "71ccbe49-1223-4c1a-8e82-e55e4b5ef9d8"
+      IssueType:
+        type: object
+        properties:
+          key:
+            type: string
+            description: Unique key for the issue type
+            example: "incorrect_translation"
+          label:
+            type: string
+            description: Human-readable label of the issue type
+            example: "Incorrect translation"
+      TranslationFeedbackRequest:
+        type: object
+        required:
+          - type
+          - originalText
+          - translatedText
+          - sourceLanguage
+          - targetLanguage
+          - languagePair
+          - issueType
+          - email
+          - pageUrl
+          - source_hash
+        properties:
+          type:
+            type: string
+            description: "Feedback type, either 'inline' or 'file'"
+            enum: ["inline", "file"]
+            example: "inline"
+          fileId:
+            type: string
+            description: "File identifier (optional, for 'file' type)"
+            example: "doc456"
+          fileName:
+            type: string
+            description: "File name (optional)"
+            example: "manual_fr.pdf"
+          originalText:
+            type: string
+            description: "Original source text"
+            example: "Start the engine."
+          translatedText:
+            type: string
+            description: "Translated text"
+            example: "Démarrer le moteur."
+          sourceLanguage:
+            type: string
+            description: "Source language code"
+            example: "en"
+          targetLanguage:
+            type: string
+            description: "Target language code"
+            example: "fr"
+          languagePair:
+            type: string
+            description: "Language pair, e.g., 'en-fr'"
+            example: "en-fr"
+          issueType:
+            type: string
+            description: "Type of issue reported"
+            example: "Incorrect translation"
+          suggestedFix:
+            type: string
+            description: "Suggested correction for the translation"
+            example: "Lancer le moteur."
+          comments:
+            type: string
+            description: "Additional comments"
+            example: "Use mechanical terms."
+          email:
+            type: string
+            description: "User email address"
+            format: email
+            example: "user@example.com"
+          userId:
+            type: string
+            description: "User identifier (optional)"
+            example: "u123"
+          pageUrl:
+            type: string
+            description: "URL of the page where feedback was submitted"
+            format: uri
+            example: "https://app/files/123"
+          cacheId:
+            type: string
+            description: "Cache identifier (only for 'inline' type)"
+            example: "abc123"
+          source_hash:
+            type: string
+            description: "SHA-256 hash of originalText + language pair"
+            example: "d650b27a594aa6b57d0c7eae6e2f0e58e2f5be4b..."
+            
+      TranslationFeedbackResponse:
+        type: object
+        properties:
+          message:
+            type: string
+            example: "Feedback submitted successfully"
+          id:
+            type: string
+            description: "Unique feedback submission identifier"
+            example: "66499fbc1e2345abc"
+
+      TranslationFeedbackEntry:
+        type: object
+        properties:
+          id:
+            type: string
+            description: Unique feedback entry identifier
+            example: "fbk_inline_001"
+          type:
+            type: string
+            description: Feedback type
+            enum: ["inline", "file"]
+            example: "inline"
+          fileId:
+            type: string
+            description: File identifier (for file type feedback)
+            example: "doc456"
+          fileName:
+            type: string
+            description: File name (for file type feedback)
+            example: "manual_fr.pdf"
+          originalText:
+            type: string
+            description: Original source text
+            example: "Start the engine."
+          translatedText:
+            type: string
+            description: Translated text
+            example: "Démarrer le moteur."
+          sourceLanguage:
+            type: string
+            description: Source language code
+            example: "en"
+          targetLanguage:
+            type: string
+            description: Target language code
+            example: "fr"
+          languagePair:
+            type: string
+            description: Language pair
+            example: "en-fr"
+          issueType:
+            type: string
+            description: Reported issue type
+            example: "Incorrect translation"
+          suggestedFix:
+            type: string
+            description: Suggested fix for the translation
+            example: "Lancer le moteur."
+          comments:
+            type: string
+            description: Additional user comments
+            example: "Use mechanical terms."
+          email:
+            type: string
+            format: email
+            description: User email address
+            example: "user@example.com"
+          userId:
+            type: string
+            description: User identifier
+            example: "u123"
+          pageUrl:
+            type: string
+            format: uri
+            description: URL of the page where feedback was submitted
+            example: "https://app/ui/component/engine"
+          cacheId:
+            type: string
+            description: Cache identifier
+            example: "abc123"
+          source_hash:
+            type: string
+            description: SHA-256 hash of originalText + language pair
+            example: "d650b27a594aa6b57d0c7eae6e2f0e58e2f5be4b..."
+          wasCached:
+            type: boolean
+            description: Whether the translation was served from cache
+            example: true
+          status:
+            type: string
+            description: Current feedback status
+            example: "pending"
+          submittedAt:
+            type: string
+            format: date-time
+            description: Timestamp when feedback was submitted
+            example: "2025-07-11T10:20:00Z"
+      TranslationFeedbackEntryWithReview:
+        type: object
+        properties:
+          _id:
+            type: string
+            description: Database object ID
+            example: "60d21b4667d0d8992e610c85"
+          type:
+            type: string
+            enum: [inline, file]
+            example: "file"
+          fileId:
+            type: string
+            example: "doc456"
+          fileName:
+            type: string
+            example: "translated_manual_fr.pdf"
+          originalText:
+            type: string
+            example: "Start the engine."
+          translatedText:
+            type: string
+            example: "Démarrer le moteur."
+          sourceLanguage:
+            type: string
+            example: "en"
+          targetLanguage:
+            type: string
+            example: "fr"
+          languagePair:
+            type: string
+            example: "en-fr"
+          issueType:
+            type: string
+            example: "Technical term incorrect"
+          suggestedFix:
+            type: string
+            example: "Lancer le moteur."
+          comments:
+            type: string
+            example: "Use consistent mechanical terms."
+          email:
+            type: string
+            format: email
+            example: "user@example.com"
+          userId:
+            type: string
+            example: "u123"
+          pageUrl:
+            type: string
+            format: uri
+            example: "https://app/files/123"
+          cacheId:
+            type: string
+            example: "abc123"
+          source_hash:
+            type: string
+            example: "d650b27a594aa6b57d0c7eae6e2f0e58e2f5be4b..."
+          wasCached:
+            type: boolean
+            example: true
+          status:
+            type: string
+            enum: [pending, reviewed, fixed, rejected]
+            example: "fixed"
+          decision:
+            type: string
+            enum: [accepted, rejected]
+            example: "accepted"
+          reviewedBy:
+            type: string
+            format: email
+            example: "admin@example.com"
+          reviewedAt:
+            type: string
+            format: date-time
+            example: "2025-07-07T14:30:00Z"
+          expiresAt:
+            type: string
+            format: date-time
+            example: "2028-07-07T14:30:00Z"
+          createdAt:
+            type: string
+            format: date-time
+            example: "2025-07-07T12:00:00Z"
+          updatedAt:
+            type: string
+            format: date-time
+            example: "2025-07-07T14:30:00Z"
+      GlossaryNotificationRequest:
+        type: object
+        required:
+          - recipient_user_id
+          - type
+          - message
+          - related_glossary_id
+          - term
+          - created_by
+        properties:
+          recipient_user_id:
+            type: string
+            description: UUID of the glossary owner to notify
+            example: "owner-uuid-123"
+          type:
+            type: string
+            description: Type of notification event
+            example: "glossary.change.request"
+          message:
+            type: string
+            description: Notification message to the glossary owner
+            example: "New term 'Crew → Unit' submitted by user123 requires your review."
+          related_glossary_id:
+            type: integer
+            description: ID of the related glossary
+            example: 84606
+          term:
+            type: object
+            required:
+              - src
+              - tgt
+            properties:
+              src:
+                type: string
+                description: Original glossary term
+                example: "Crew"
+              tgt:
+                type: string
+                description: Updated glossary term
+                example: "Unit"
+          created_by:
+            type: string
+            description: User ID who created or modified the term
+            example: "user123"
+
+      GlossaryNotificationResponse:
+        type: object
+        properties:
+          status:
+            type: string
+            description: Result status of the notification request
+            example: "success"
+          message:
+            type: string
+            description: Response message
+            example: "Notification sent successfully."
+          notification:
+            type: object
+            properties:
+              id:
+                type: string
+                description: Notification unique identifier
+                example: "notif-7890-uuid"
+              recipient_user_id:
+                type: string
+                description: Recipient user ID
+                example: "owner-uuid-123"
+              type:
+                type: string
+                description: Notification type
+                example: "glossary.change.request"
+              message:
+                type: string
+                description: Notification message
+                example: "New term 'Crew → Unit' submitted by user123 requires your review."
+              related_glossary_id:
+                type: integer
+                description: Related glossary ID
+                example: 84606
+              term:
+                type: object
+                properties:
+                  src:
+                    type: string
+                    example: "Crew"
+                  tgt:
+                    type: string
+                    example: "Unit"
+              created_by:
+                type: string
+                example: "user123"
+              created_at:
+                type: string
+                format: date-time
+                example: "2025-07-18T12:05:00Z"
+              is_read:
+                type: boolean
+                example: false
+      GlossaryTermReviewRequest:
+        type: object
+        required:
+          - status
+          - reviewed_by
+        properties:
+          status:
+            type: string
+            description: Status of the term review
+            enum: [APPROVED, REJECTED]
+            example: "APPROVED"
+          reviewed_by:
+            type: string
+            format: email
+            description: Email of the glossary owner reviewing the term
+            example: "glossary_owner@domain.com"
+          comment:
+            type: string
+            description: Optional comments from the reviewer
+            example: ""
+
+      ApproveResponse:
+        type: object
+        properties:
+          status:
+            type: string
+            example: "success"
+          message:
+            type: string
+            example: "Term 'team → team' has been approved successfully."
+          term_id:
+            type: string
+            example: "term-001"
+          new_status:
+            type: string
+            example: "APPROVED"
+          reviewed_by:
+            type: string
+            format: email
+            example: "glossary_owner@domain.com"
+          reviewed_at:
+            type: string
+            format: date-time
+            example: "2025-07-18T13:47:00Z"
+          comment:
+            type: string
+            example: ""
+
+      RejectResponse:
+        type: object
+        properties:
+          status:
+            type: string
+            example: "success"
+          message:
+            type: string
+            example: "Review saved successfully."
+          term_id:
+            type: string
+            example: "term-002"
+          new_status:
+            type: string
+            example: "REJECTED"
+      UserReviewNotificationRequest:
+        type: object
+        required:
+          - recipient_user_id
+          - type
+          - message
+          - term_id
+          - status
+          - reviewed_by
+        properties:
+          recipient_user_id:
+            type: string
+            description: UUID or ID of the user to notify
+            example: "user-id-user123"
+          type:
+            type: string
+            description: Notification type
+            example: "glossary.change.response"
+          message:
+            type: string
+            description: Notification message shown to the user
+            example: "Your term 'team' → 'team' was approved by the glossary owner."
+          term_id:
+            type: string
+            description: ID of the glossary term
+            example: "term-001"
+          status:
+            type: string
+            enum: [APPROVED, REJECTED]
+            description: Review status of the term
+            example: "APPROVED"
+          comment:
+            type: string
+            description: Optional reviewer comment
+            example: "Use 'Team' instead of 'Squard'."
+          reviewed_by:
+            type: string
+            format: email
+            description: Email of the reviewer
+            example: "glossary_owner@domain.com"
+
+      UserReviewNotificationResponse:
+        type: object
+        properties:
+          status:
+            type: string
+            example: "success"
+          message:
+            type: string
+            example: "Notification sent successfully."
+          notification:
+            type: object
+            properties:
+              id:
+                type: string
+                example: "notif-101"
+              recipient_user_id:
+                type: string
+                example: "user-id-user123"
+              type:
+                type: string
+                example: "glossary.change.response"
+              term_id:
+                type: string
+                example: "term-001"
+              status:
+                type: string
+                example: "APPROVED"
+              message:
+                type: string
+                example: "Your term 'team' → 'team' was approved by the glossary owner."
+              comment:
+                type: string
+                example: ""
+              reviewed_by:
+                type: string
+                format: email
+                example: "glossary_owner@domain.com"
+              created_at:
+                type: string
+                format: date-time
+                example: "2025-07-18T13:48:00Z"
+              is_read:
+                type: boolean
+                example: false
+      NotifyGlossaryOwnerRequest:
+        type: object
+        required:
+          - recipient_user_id
+          - type
+          - message
+          - related_glossary_id
+          - term
+          - created_by
+        properties:
+          recipient_user_id:
+            type: string
+            description: UUID of the glossary owner
+            example: "owner-uuid-123"
+          type:
+            type: string
+            example: "glossary.change.request"
+          message:
+            type: string
+            example: "New term 'Crew → Unit' submitted by user123 requires your review."
+          related_glossary_id:
+            type: integer
+            example: 84606
+          term:
+            type: object
+            required:
+              - src
+              - tgt
+            properties:
+              src:
+                type: string
+                example: "Crew"
+              tgt:
+                type: string
+                example: "Unit"
+          created_by:
+            type: string
+            example: "user123"
+
+      NotifyUserApprovalRequest:
+        type: object
+        required:
+          - recipient_user_id
+          - type
+          - message
+          - term_id
+          - status
+          - comment
+          - reviewed_by
+        properties:
+          recipient_user_id:
+            type: string
+            example: "user-id-user123"
+          type:
+            type: string
+            example: "glossary.change.response"
+          message:
+            type: string
+            example: "Your term 'team' → 'team' was approved by the glossary owner."
+          term_id:
+            type: string
+            example: "term-001"
+          status:
+            type: string
+            enum:
+              - APPROVED
+              - REJECTED
+            example: "APPROVED"
+          comment:
+            type: string
+            example: ""
+          reviewed_by:
+            type: string
+            format: email
+            example: "glossary_owner@domain.com"
+
+      NotifyUserRejectionRequest:
+        allOf:
+          - $ref: '#/components/schemas/NotifyUserApprovalRequest'
+          - type: object
+            required:
+              - comment
+            properties:
+              status:
+                type: string
+                enum:
+                  - REJECTED
+                example: "REJECTED"
+              comment:
+                type: string
+                example: "Use 'Team' instead of 'Squard'."
+
+      NotificationResponse:
+        type: object
+        properties:
+          status:
+            type: string
+            example: "success"
+          message:
+            type: string
+            example: "Notification sent successfully."
+          notification:
+            type: object
+            properties:
+              id:
+                type: string
+                example: "notif-7890-uuid"
+              recipient_user_id:
+                type: string
+                example: "owner-uuid-123"
+              type:
+                type: string
+                example: "glossary.change.request"
+              message:
+                type: string
+                example: "New term 'Crew → Unit' submitted by user123 requires your review."
+              related_glossary_id:
+                type: integer
+                nullable: true
+                example: 84606
+              term:
+                type: object
+                nullable: true
+                properties:
+                  src:
+                    type: string
+                    example: "Crew"
+                  tgt:
+                    type: string
+                    example: "Unit"
+              created_by:
+                type: string
+                nullable: true
+                example: "user123"
+              term_id:
+                type: string
+                nullable: true
+                example: "term-001"
+              status:
+                type: string
+                nullable: true
+                example: "APPROVED"
+              comment:
+                type: string
+                nullable: true
+                example: ""
+              reviewed_by:
+                type: string
+                format: email
+                nullable: true
+                example: "glossary_owner@domain.com"
+              created_at:
+                type: string
+                format: date-time
+                example: "2025-07-18T12:05:00Z"
+              is_read:
+                type: boolean
+                example: false
+      NotifyUserApprovalResponse:
+        type: object
+        properties:
+          status:
+            type: string
+            example: "success"
+          message:
+            type: string
+            example: "Notification sent successfully."
+          notification:
+            type: object
+            properties:
+              id:
+                type: string
+                example: "notif-101"
+              recipient_user_id:
+                type: string
+                example: "user-id-user123"
+              type:
+                type: string
+                example: "glossary.change.response"
+              term_id:
+                type: string
+                example: "term-001"
+              status:
+                type: string
+                example: "APPROVED"
+              message:
+                type: string
+                example: "Your term 'team' → 'team' was approved by the glossary owner."
+              comment:
+                type: string
+                example: ""
+              reviewed_by:
+                type: string
+                example: "glossary_owner@domain.com"
+              created_at:
+                type: string
+                format: date-time
+                example: "2025-07-18T13:48:00Z"
+              is_read:
+                type: boolean
+                example: false
+      NotifyUserRejectionResponse:
+        type: object
+        properties:
+          status:
+            type: string
+            example: "success"
+          message:
+            type: string
+            example: "Notification sent successfully."
+          notification:
+            type: object
+            properties:
+              id:
+                type: string
+                example: "notif-102"
+              recipient_user_id:
+                type: string
+                example: "user-id-user123"
+              type:
+                type: string
+                example: "glossary.change.response"
+              term_id:
+                type: string
+                example: "term-002"
+              status:
+                type: string
+                example: "REJECTED"
+              message:
+                type: string
+                example: "Your term 'squard' → 'squard' was rejected by the glossary owner: Use 'Team' instead of 'Squard'."
+              comment:
+                type: string
+                example: "Use 'Team' instead of 'Squard'."
+              reviewed_by:
+                type: string
+                example: "glossary_owner@domain.com"
+              created_at:
+                type: string
+                format: date-time
+                example: "2025-07-18T13:52:00Z"
+              is_read:
+                type: boolean
+                example: true
+
+
+
+
+    
+            
+      ErrorResponse:
+        type: object
+        properties:
+          error:
+            type: boolean
+            example: true
+          message:
+            type: string
+            example: Translation request failed.
+          details:
+            type: string
+            example: authentication issue or server issue
+          status_code:
+            type: integer
+            example: 500
