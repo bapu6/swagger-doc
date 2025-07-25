@@ -1,5 +1,5 @@
 ---
-name: 💬 Feedback & Suggestions
+name: 💬 Feedback & Suggestions test
 about: Share your feedback, suggestions, or ideas to improve Translation Hub Backend
 title: "[FEEDBACK] "
 labels: ["feedback", "enhancement"]
