@@ -2,8 +2,8 @@
 (function () {
   // Configuration - Update these values for your repository
   const GITHUB_CONFIG = {
-    owner: "bayer-int",
-    repo: "TnE-AIIA-TranslationHub-BE",
+    owner: "bapu6",
+    repo: "swagger-doc",
     // GitHub API endpoint
     apiUrl: "https://api.github.com",
     // For production, you'd want to use GitHub Apps or OAuth
