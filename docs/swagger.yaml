@@ -1,7 +1,9 @@
   openapi: 3.0.0
   servers:
-    - description: SwaggerHub API Auto Mocking
-      url: https://virtserver.swaggerhub.com/hcl-6c5/Translation-Hub/1.0.0
+    - url: https://virtserver.swaggerhub.com/hcl-6c5/Translation-Hub/1.0.0
+      description: SwaggerHub API Auto Mocking
+    - url: https:virtserver.swaggerhub.com/hcl-6c5/Translation-Hub/2.0.0
+      description: SwaggerHub API Auto Mocking v2
   info:
     version: "1.0.0"
     title: Translation Hub API
